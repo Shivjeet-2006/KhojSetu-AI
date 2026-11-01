@@ -11,25 +11,46 @@ from services.voice_input import voice_to_text
 from services.matching import find_matches
 
 
+# --------------------------------------------------
+# PAGE CONFIGURATION
+# --------------------------------------------------
+
 st.set_page_config(
     page_title="KhojSetu AI",
     page_icon="🔎",
     layout="wide"
 )
 
+
+# --------------------------------------------------
+# DATABASE INITIALIZATION
+# --------------------------------------------------
+
 create_tables()
 
+
+# --------------------------------------------------
+# HEADER
+# --------------------------------------------------
+
 st.title("🔎 KhojSetu AI")
+
 st.subheader("Lost in words. Found through intelligence.")
 
 st.write(
-    "A multilingual, voice-powered lost-and-found platform."
+    "A multilingual, AI-powered lost-and-found platform "
+    "that helps people reconnect with their lost belongings."
 )
 
 st.divider()
 
-menu = st.sidebar.selectbox(
-    "Choose an option",
+
+# --------------------------------------------------
+# NAVIGATION
+# --------------------------------------------------
+
+menu = st.sidebar.radio(
+    "Navigation",
     [
         "Report an Item",
         "Browse Reports",
@@ -38,25 +59,32 @@ menu = st.sidebar.selectbox(
 )
 
 
-# REPORT AN ITEM
+# ==================================================
+# 1. REPORT AN ITEM
+# ==================================================
+
 if menu == "Report an Item":
 
-    st.header("Submit a Lost or Found Report")
+    st.header("📝 Report a Lost or Found Item")
 
     report_type = st.radio(
-        "What happened?",
+        "Select report type",
         ["Lost", "Found"],
         horizontal=True
     )
 
+    st.write("### 🎙️ Voice Reporting")
+
     transcript = voice_to_text()
+
+    st.write("### Item Information")
 
     with st.form("report_form"):
 
         description = st.text_area(
             "Describe the item",
             value=transcript,
-            placeholder="Example: Black backpack with a red tag"
+            placeholder="Example: I lost my black backpack with a red tag."
         )
 
         category = st.selectbox(
@@ -68,186 +96,293 @@ if menu == "Report an Item":
                 "Laptop",
                 "Documents",
                 "Keys",
+                "Accessories",
                 "Other"
             ]
         )
 
-        color = st.text_input("Item Colour")
-        location = st.text_input("Location")
-        item_date = st.text_input("Date (YYYY-MM-DD)")
+        color = st.text_input(
+            "Item Color",
+            placeholder="Example: Black"
+        )
 
-        details = st.text_area(
-            "Unique identifying details"
+        location = st.text_input(
+            "Location",
+            placeholder="Example: Near college entrance"
+        )
+
+        item_date = st.date_input(
+            "Date when item was lost or found"
+        )
+
+        identifying_details = st.text_area(
+            "Identifying Details",
+            placeholder="Example: Small red tag, sticker, scratches, etc."
         )
 
         submitted = st.form_submit_button(
-            "Submit Report"
+            "Submit Report",
+            use_container_width=True
         )
 
         if submitted:
 
             if not description.strip():
-                st.error("Please describe the item.")
+                st.error("Please enter an item description.")
 
             elif not location.strip():
                 st.error("Please enter the location.")
 
             else:
-                add_report(
-                    report_type.lower(),
-                    description,
-                    category,
-                    color,
-                    location,
-                    item_date,
-                    details
+
+                report_id = add_report(
+                    report_type=report_type.lower(),
+                    description=description.strip(),
+                    category=category,
+                    color=color.strip(),
+                    location=location.strip(),
+                    item_date=str(item_date),
+                    identifying_details=identifying_details.strip()
                 )
 
                 st.success(
-                    "Your report has been submitted successfully!"
+                    f"Your {report_type.lower()} report was submitted successfully!"
+                )
+
+                st.info(f"Your Report ID is: {report_id}")
+
+
+# ==================================================
+# 2. BROWSE REPORTS
+# ==================================================
+
+elif menu == "Browse Reports":
+
+    st.header("📋 Browse Lost and Found Reports")
+
+    report_filter = st.selectbox(
+        "Filter Reports",
+        [
+            "All Reports",
+            "Lost Items",
+            "Found Items"
+        ]
+    )
+
+    if report_filter == "Lost Items":
+        reports = get_reports("lost")
+
+    elif report_filter == "Found Items":
+        reports = get_reports("found")
+
+    else:
+        reports = get_reports()
+
+    if not reports:
+
+        st.info("No reports available yet.")
+
+    else:
+
+        for report in reports:
+
+            report_label = (
+                "🔴 LOST"
+                if report["report_type"] == "lost"
+                else "🟢 FOUND"
+            )
+
+            with st.expander(
+                f'{report_label} | Report #{report["id"]}'
+            ):
+
+                st.write(
+                    f'**Description:** {report["description"]}'
+                )
+
+                st.write(
+                    f'**Category:** {report.get("category") or "Not specified"}'
+                )
+
+                st.write(
+                    f'**Color:** {report.get("color") or "Not specified"}'
+                )
+
+                st.write(
+                    f'**Location:** {report.get("location") or "Not specified"}'
+                )
+
+                st.write(
+                    f'**Date:** {report.get("item_date") or "Not specified"}'
+                )
+
+                st.write(
+                    "**Identifying Details:** "
+                    + (
+                        report.get("identifying_details")
+                        or "Not specified"
+                    )
                 )
 
 
-# BROWSE REPORTS
-elif menu == "Browse Reports":
+# ==================================================
+# 3. FIND AI MATCHES
+# ==================================================
 
-    st.header("Lost and Found Reports")
-
-    report_filter = st.selectbox(
-        "Filter reports",
-        ["All", "Lost", "Found"]
-    )
-
-    selected_type = (
-        None if report_filter == "All"
-        else report_filter.lower()
-    )
-
-    reports = get_reports(selected_type)
-
-    if not reports:
-        st.info("No reports available yet.")
-
-    for report in reports:
-
-        with st.container(border=True):
-
-            st.subheader(
-                f"{report['report_type'].upper()} - "
-                f"{report['category'] or 'Other'}"
-            )
-
-            st.write(report["description"])
-            st.write("📍 Location:", report["location"])
-            st.write("🎨 Colour:", report["color"])
-
-            st.caption(
-                f"Report ID: {report['id']} | "
-                f"Date: {report['created_at']}"
-            )
-
-
-# FIND MATCHES
 elif menu == "Find Matches":
 
     st.header("🤖 AI-Powered Item Matching")
 
     st.write(
-        "Find possible matches between lost and found items."
+        "Select a lost item to find similar found-item reports."
     )
 
     all_reports = get_reports()
 
     lost_items = [
-        item for item in all_reports
-        if item["report_type"] == "lost"
+        report for report in all_reports
+        if report["report_type"] == "lost"
     ]
 
     found_items = [
-        item for item in all_reports
-        if item["report_type"] == "found"
+        report for report in all_reports
+        if report["report_type"] == "found"
     ]
 
     if not lost_items:
-        st.warning("No lost-item reports available.")
+
+        st.warning("No lost-item reports are available.")
 
     elif not found_items:
-        st.warning("No found-item reports available.")
+
+        st.warning("No found-item reports are available yet.")
 
     else:
 
         selected_lost = st.selectbox(
-            "Select a lost item",
+            "Select a Lost Item",
             lost_items,
-            format_func=lambda x: (
-                f"Report #{x['id']} - {x['description'][:65]}"
+            format_func=lambda item: (
+                f'Report #{item["id"]} - '
+                f'{item["description"][:65]}'
             )
         )
 
-        if st.button("🔍 Find Possible Matches"):
+        if st.button(
+            "🔍 Find Possible Matches",
+            use_container_width=True
+        ):
 
             try:
+
                 with st.spinner(
-                    "AI is comparing item descriptions..."
+                    "AI is comparing item descriptions and details..."
                 ):
 
                     matches = find_matches(
-                        selected_lost["description"],
-                        found_items,
-                        top_k=3
+                        lost_description=selected_lost["description"],
+                        found_items=found_items,
+                        top_k=3,
+                        lost_item=selected_lost
                     )
 
                 if not matches:
-                    st.info("No possible matches found.")
+
+                    st.warning("No possible matches found.")
 
                 else:
-                    st.success("Matching analysis completed!")
 
-                    for index, match in enumerate(matches, 1):
+                    st.success(
+                        f"Found {len(matches)} possible match(es)."
+                    )
+
+                    for index, match in enumerate(matches, start=1):
 
                         item = match["item"]
-                        score = match["similarity_score"]
 
                         with st.container(border=True):
 
                             st.subheader(
-                                f"Possible Match #{index}"
+                                f"Match #{index}"
                             )
 
                             st.metric(
-                                "Description Similarity",
-                                f"{score}%"
+                                "Matching Score",
+                                f'{match["similarity_score"]}%'
                             )
 
                             st.write(
-                                "**Found item:**",
-                                item["description"]
+                                f'**Found Report ID:** {item["id"]}'
                             )
 
                             st.write(
-                                "**Category:**",
-                                item["category"]
+                                f'**Description:** {item["description"]}'
                             )
 
                             st.write(
-                                "**Colour:**",
-                                item["color"]
+                                f'**Category:** {item.get("category") or "Not specified"}'
                             )
 
                             st.write(
-                                "**Location:**",
-                                item["location"]
+                                f'**Color:** {item.get("color") or "Not specified"}'
                             )
 
-                            st.caption(
-                                "This is an AI similarity ranking, "
-                                "not a confirmed match or probability."
+                            st.write(
+                                f'**Location:** {item.get("location") or "Not specified"}'
                             )
+
+                            st.write("**Matching Factors:**")
+
+                            st.write(
+                                f'- Description similarity: '
+                                f'{match["description_score"]}%'
+                            )
+
+                            st.write(
+                                f'- Category match: '
+                                f'{"Yes" if match["category_match"] else "No"}'
+                            )
+
+                            st.write(
+                                f'- Color match: '
+                                f'{"Yes" if match["color_match"] else "No"}'
+                            )
+
+                            st.write(
+                                f'- Location match: '
+                                f'{"Yes" if match["location_match"] else "No"}'
+                            )
+
+                            st.write(
+                                f'- Identifying details match: '
+                                f'{"Yes" if match["details_match"] else "No"}'
+                            )
+
+                    st.caption(
+                        "Note: Matching scores are ranking scores, "
+                        "not probabilities. Always verify ownership "
+                        "before returning an item."
+                    )
 
             except Exception as error:
+
                 st.error(
                     f"Matching failed: {error}"
                 )
+
                 st.info(
-                    "Check the deployment logs and dependencies."
+                    "Please try again. The AI model may need time "
+                    "to load on its first run."
                 )
+
+
+# --------------------------------------------------
+# FOOTER
+# --------------------------------------------------
+
+st.divider()
+
+st.caption(
+    "KhojSetu AI | Powered by Gnani AI voice technology "
+    "and multilingual machine learning."
+)
