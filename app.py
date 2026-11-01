@@ -41,16 +41,15 @@ if menu == "Report an Item":
         horizontal=True
     )
 
-    # Voice input outside the form
     transcript = voice_to_text()
 
     with st.form("report_form"):
 
-description = st.text_area(
-    "Describe the item",
-    value=transcript,
-    placeholder="Example: Black backpack with a red tag"
-)
+        description = st.text_area(
+            "Describe the item",
+            value=transcript,
+            placeholder="Example: Black backpack with a red tag"
+        )
 
         category = st.selectbox(
             "Item Category",
