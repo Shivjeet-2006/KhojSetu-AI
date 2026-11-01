@@ -31,13 +31,13 @@ def voice_to_text():
 
             api_key = os.getenv("GNANI_API_KEY")
 
-if not api_key:
-    try:
-        api_key = st.secrets["GNANI_API_KEY"]
-    except Exception:
-        api_key = None
+            if not api_key:
+                try:
+                    api_key = st.secrets["GNANI_API_KEY"]
+                except Exception:
+                    api_key = None
 
-if not api_key:
+            if not api_key:
                 st.error("Gnani API key is missing.")
                 return st.session_state.voice_transcript
 
@@ -45,7 +45,8 @@ if not api_key:
 
             try:
                 with tempfile.NamedTemporaryFile(
-                    suffix=".wav", delete=False
+                    suffix=".wav",
+                    delete=False
                 ) as temp:
                     temp.write(audio_file.getvalue())
                     temp_path = temp.name
@@ -57,11 +58,16 @@ if not api_key:
                         language_code=language
                     )
 
-                transcript = result.get("transcript", "")
+                transcript = (
+                    result.get("transcript")
+                    or result.get("text")
+                    or ""
+                )
 
                 if transcript:
                     st.session_state.voice_transcript = transcript
                     st.success("Transcription successful!")
+                    st.info(transcript)
                 else:
                     st.warning("No speech detected.")
 
