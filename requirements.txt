@@ -4,3 +4,6 @@ numpy
 streamlit
 sentence-transformers
 scikit-learn
+gnani-vachana
+transformers
+soundfile
