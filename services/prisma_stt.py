@@ -1,26 +1,32 @@
+
 import os
+import time
 import requests
+import streamlit as st
+
+
+def get_api_key():
+
+    key = os.getenv("GNANI_API_KEY")
+
+    if not key:
+        try:
+            key = st.secrets["GNANI_API_KEY"]
+        except Exception:
+            key = None
+
+    if not key:
+        raise ValueError("Gnani API key is missing.")
+
+    return key
 
 
 def transcribe_audio(audio_path, language_code="hi-IN"):
 
-    import streamlit as st
-
-api_key = os.getenv("GNANI_API_KEY")
-
-if not api_key:
-    try:
-        api_key = st.secrets["GNANI_API_KEY"]
-    except Exception:
-        api_key = None
-
-    if not api_key:
-        raise ValueError("GNANI_API_KEY is not configured.")
-
     url = "https://api.vachana.ai/stt/v3"
 
     headers = {
-        "X-API-Key-ID": api_key
+        "X-API-Key-ID": get_api_key()
     }
 
     data = {
@@ -30,21 +36,34 @@ if not api_key:
         "itn_native_numerals": "true"
     }
 
-    with open(audio_path, "rb") as audio:
-        response = requests.post(
-            url,
-            headers=headers,
-            data=data,
-            files={
-                "audio_file": (
-                    os.path.basename(audio_path),
-                    audio,
-                    "audio/wav"
+    for attempt in range(2):
+
+        try:
+            with open(audio_path, "rb") as audio:
+
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    data=data,
+                    files={
+                        "audio_file": (
+                            os.path.basename(audio_path),
+                            audio,
+                            "audio/wav"
+                        )
+                    },
+                    timeout=120
                 )
-            },
-            timeout=120
-        )
 
-    response.raise_for_status()
+            response.raise_for_status()
 
-    return response.json()
+            return response.json()
+
+        except requests.exceptions.RequestException:
+
+            if attempt == 0:
+                time.sleep(5)
+            else:
+                raise
+
+    return {}
