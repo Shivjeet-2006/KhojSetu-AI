@@ -8,6 +8,9 @@ from services.prisma_stt import transcribe_audio
 
 def voice_to_text():
 
+    if "voice_transcript" not in st.session_state:
+        st.session_state.voice_transcript = ""
+
     st.subheader("🎙️ Report using your voice")
 
     language = st.selectbox(
@@ -16,7 +19,8 @@ def voice_to_text():
     )
 
     audio_file = st.audio_input(
-        "Record your lost or found item description"
+        "Record your item description",
+        sample_rate=16000
     )
 
     if audio_file is not None:
@@ -27,7 +31,7 @@ def voice_to_text():
 
             if not os.getenv("GNANI_API_KEY"):
                 st.error("Gnani API key is missing.")
-                return None
+                return st.session_state.voice_transcript
 
             temp_path = None
 
@@ -38,22 +42,20 @@ def voice_to_text():
                     temp.write(audio_file.getvalue())
                     temp_path = temp.name
 
-                with st.spinner("Transcribing your voice..."):
+                with st.spinner("Converting speech..."):
 
                     result = transcribe_audio(
                         temp_path,
                         language_code=language
                     )
 
-                transcript = result.get("text", "")
+                transcript = result.get("transcript", "")
 
                 if transcript:
-                    st.success("Speech converted successfully!")
-                    st.write("Your description:")
-                    st.info(transcript)
-                    return transcript
-
-                st.warning("No speech detected.")
+                    st.session_state.voice_transcript = transcript
+                    st.success("Transcription successful!")
+                else:
+                    st.warning("No speech detected.")
 
             except Exception as error:
                 st.error(f"Transcription failed: {error}")
@@ -62,4 +64,4 @@ def voice_to_text():
                 if temp_path and os.path.exists(temp_path):
                     os.remove(temp_path)
 
-    return None
+    return st.session_state.voice_transcript
