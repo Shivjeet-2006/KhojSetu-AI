@@ -8,6 +8,8 @@ from database.database import (
 )
 
 from services.voice_input import voice_to_text
+from services.matching import find_matches
+
 
 st.set_page_config(
     page_title="KhojSetu AI",
@@ -28,9 +30,15 @@ st.divider()
 
 menu = st.sidebar.selectbox(
     "Choose an option",
-    ["Report an Item", "Browse Reports"]
+    [
+        "Report an Item",
+        "Browse Reports",
+        "Find Matches"
+    ]
 )
 
+
+# REPORT AN ITEM
 if menu == "Report an Item":
 
     st.header("Submit a Lost or Found Report")
@@ -100,6 +108,7 @@ if menu == "Report an Item":
                 )
 
 
+# BROWSE REPORTS
 elif menu == "Browse Reports":
 
     st.header("Lost and Found Reports")
@@ -136,3 +145,109 @@ elif menu == "Browse Reports":
                 f"Report ID: {report['id']} | "
                 f"Date: {report['created_at']}"
             )
+
+
+# FIND MATCHES
+elif menu == "Find Matches":
+
+    st.header("🤖 AI-Powered Item Matching")
+
+    st.write(
+        "Find possible matches between lost and found items."
+    )
+
+    all_reports = get_reports()
+
+    lost_items = [
+        item for item in all_reports
+        if item["report_type"] == "lost"
+    ]
+
+    found_items = [
+        item for item in all_reports
+        if item["report_type"] == "found"
+    ]
+
+    if not lost_items:
+        st.warning("No lost-item reports available.")
+
+    elif not found_items:
+        st.warning("No found-item reports available.")
+
+    else:
+
+        selected_lost = st.selectbox(
+            "Select a lost item",
+            lost_items,
+            format_func=lambda x: (
+                f"Report #{x['id']} - {x['description'][:65]}"
+            )
+        )
+
+        if st.button("🔍 Find Possible Matches"):
+
+            try:
+                with st.spinner(
+                    "AI is comparing item descriptions..."
+                ):
+
+                    matches = find_matches(
+                        selected_lost["description"],
+                        found_items,
+                        top_k=3
+                    )
+
+                if not matches:
+                    st.info("No possible matches found.")
+
+                else:
+                    st.success("Matching analysis completed!")
+
+                    for index, match in enumerate(matches, 1):
+
+                        item = match["item"]
+                        score = match["similarity_score"]
+
+                        with st.container(border=True):
+
+                            st.subheader(
+                                f"Possible Match #{index}"
+                            )
+
+                            st.metric(
+                                "Description Similarity",
+                                f"{score}%"
+                            )
+
+                            st.write(
+                                "**Found item:**",
+                                item["description"]
+                            )
+
+                            st.write(
+                                "**Category:**",
+                                item["category"]
+                            )
+
+                            st.write(
+                                "**Colour:**",
+                                item["color"]
+                            )
+
+                            st.write(
+                                "**Location:**",
+                                item["location"]
+                            )
+
+                            st.caption(
+                                "This is an AI similarity ranking, "
+                                "not a confirmed match or probability."
+                            )
+
+            except Exception as error:
+                st.error(
+                    f"Matching failed: {error}"
+                )
+                st.info(
+                    "Check the deployment logs and dependencies."
+                )
