@@ -4,7 +4,15 @@ import requests
 
 def transcribe_audio(audio_path, language_code="hi-IN"):
 
-    api_key = os.getenv("GNANI_API_KEY")
+    import streamlit as st
+
+api_key = os.getenv("GNANI_API_KEY")
+
+if not api_key:
+    try:
+        api_key = st.secrets["GNANI_API_KEY"]
+    except Exception:
+        api_key = None
 
     if not api_key:
         raise ValueError("GNANI_API_KEY is not configured.")
