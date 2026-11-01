@@ -7,6 +7,8 @@ from database.database import (
     get_reports
 )
 
+from services.voice_input import voice_to_text
+
 st.set_page_config(
     page_title="KhojSetu AI",
     page_icon="🔎",
@@ -19,8 +21,7 @@ st.title("🔎 KhojSetu AI")
 st.subheader("Lost in words. Found through intelligence.")
 
 st.write(
-    "A multilingual lost-and-found platform "
-    "powered by AI."
+    "A multilingual, voice-powered lost-and-found platform."
 )
 
 st.divider()
@@ -40,10 +41,14 @@ if menu == "Report an Item":
         horizontal=True
     )
 
+    # Voice input outside the form
+    transcript = voice_to_text()
+
     with st.form("report_form"):
 
         description = st.text_area(
             "Describe the item",
+            value=transcript or "",
             placeholder="Example: Black backpack with a red tag"
         )
 
@@ -62,9 +67,7 @@ if menu == "Report an Item":
 
         color = st.text_input("Item Colour")
         location = st.text_input("Location")
-        item_date = st.text_input(
-            "Date (YYYY-MM-DD)"
-        )
+        item_date = st.text_input("Date (YYYY-MM-DD)")
 
         details = st.text_area(
             "Unique identifying details"
@@ -94,7 +97,7 @@ if menu == "Report an Item":
                 )
 
                 st.success(
-                    "Your report has been submitted!"
+                    "Your report has been submitted successfully!"
                 )
 
 
@@ -129,6 +132,7 @@ elif menu == "Browse Reports":
             st.write(report["description"])
             st.write("📍 Location:", report["location"])
             st.write("🎨 Colour:", report["color"])
+
             st.caption(
                 f"Report ID: {report['id']} | "
                 f"Date: {report['created_at']}"
