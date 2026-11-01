@@ -1,0 +1,10 @@
+.env
+*.key
+secrets.json
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+*.wav
+*.mp3
+*.m4a
