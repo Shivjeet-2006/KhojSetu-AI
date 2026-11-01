@@ -29,7 +29,15 @@ def voice_to_text():
 
         if st.button("Convert Speech to Text"):
 
-            if not os.getenv("GNANI_API_KEY"):
+            api_key = os.getenv("GNANI_API_KEY")
+
+if not api_key:
+    try:
+        api_key = st.secrets["GNANI_API_KEY"]
+    except Exception:
+        api_key = None
+
+if not api_key:
                 st.error("Gnani API key is missing.")
                 return st.session_state.voice_transcript
 
