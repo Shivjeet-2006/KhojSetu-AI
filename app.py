@@ -316,39 +316,15 @@ if menu == "Report an Item":
                             mime_type=uploaded_image.type
                         )
 
-                    category_key = f"category_{form_version}"
-                    description_key = f"description_{form_version}"
-                    color_key = f"color_{form_version}"
-                    details_key = f"details_{form_version}"
-                    previous_ai_key = f"image_ai_suggestions_{form_version}"
-                    previous_ai = st.session_state.get(previous_ai_key, {})
+                    # A successful analysis belongs to the currently uploaded photo.
+                    # Replace all previous AI-filled values so an old item's description
+                    # cannot remain attached to a newly analysed image. Users can edit
+                    # every field immediately after the suggestions are populated.
+                    st.session_state[f"category_{form_version}"] = suggestions["category"]
+                    st.session_state[f"description_{form_version}"] = suggestions["description"]
+                    st.session_state[f"color_{form_version}"] = suggestions["color"]
+                    st.session_state[f"details_{form_version}"] = "; ".join(suggestions["features"])
 
-                    # Replace an earlier AI suggestion when a new photo is analysed,
-                    # but preserve any field the user has manually edited.
-                    new_ai_values = {
-                        "category": suggestions["category"],
-                        "description": suggestions["description"],
-                        "color": suggestions["color"],
-                        "details": "; ".join(suggestions["features"])
-                    }
-                    field_keys = {
-                        "category": category_key,
-                        "description": description_key,
-                        "color": color_key,
-                        "details": details_key
-                    }
-
-                    for field, widget_key in field_keys.items():
-                        current_value = str(st.session_state.get(widget_key, "") or "").strip()
-                        previous_value = str(previous_ai.get(field, "") or "").strip()
-                        # Empty fields and unchanged previous AI suggestions can be refreshed.
-                        # A value that differs from the previous AI suggestion is treated as
-                        # a user edit and is left untouched.
-                        if not current_value or (previous_value and current_value == previous_value):
-                            if new_ai_values[field] or field != "details":
-                                st.session_state[widget_key] = new_ai_values[field]
-
-                    st.session_state[previous_ai_key] = new_ai_values
                     st.session_state[f"image_analysis_notice_{form_version}"] = (
                         f"Gemini suggestions ready. Confidence: {suggestions['confidence']}."
                     )
