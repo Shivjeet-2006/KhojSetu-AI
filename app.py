@@ -178,48 +178,40 @@ if menu == "Report an Item":
 
     with st.expander("Voice-assisted description", expanded=False):
         transcript = voice_to_text(widget_key_suffix=str(form_version))
-        st.caption("You can record a description in Hindi, English or Marathi. Review it before submitting.")
+        st.caption("Record in Hindi, English or Marathi. You can edit the recognised text in the description field.")
 
     st.subheader("Item details")
+
+    category_options = [
+        "Bag", "Bottle", "Mobile Phone", "Wallet", "Laptop",
+        "Documents", "Keys", "Clothing", "Jewellery", "Watch",
+        "Books", "Electronics", "Accessories", "Other"
+    ]
+
+    # Keep category controls outside the form so selecting Other
+    # immediately displays the custom category field.
+    category = st.selectbox(
+        "Item category *",
+        category_options,
+        key=f"category_{form_version}"
+    )
+
+    custom_category = ""
+    if category == "Other":
+        custom_category = st.text_input(
+            "Enter item category *",
+            placeholder="Example: Umbrella, lunch box, sports equipment",
+            key=f"custom_category_{form_version}"
+        )
 
     with st.form(f"report_form_{form_version}", clear_on_submit=False):
         description = st.text_area(
             "Item description *",
+            value=transcript,
             placeholder="Example: Black backpack with a red tag and two front pockets.",
             height=100,
             key=f"description_{form_version}"
         )
-
-        category_options = [
-            "Bag",
-            "Bottle",
-            "Mobile Phone",
-            "Wallet",
-            "Laptop",
-            "Documents",
-            "Keys",
-            "Clothing",
-            "Jewellery",
-            "Watch",
-            "Books",
-            "Electronics",
-            "Accessories",
-            "Other"
-        ]
-
-        category = st.selectbox(
-            "Item category *",
-            category_options,
-            key=f"category_{form_version}"
-        )
-
-        custom_category = ""
-        if category == "Other":
-            custom_category = st.text_input(
-                "Enter item category *",
-                placeholder="Example: Umbrella, lunch box, sports equipment",
-                key=f"custom_category_{form_version}"
-            )
 
         col1, col2 = st.columns(2)
         with col1:
@@ -275,7 +267,7 @@ if menu == "Report an Item":
                     identifying_details=identifying_details.strip()
                 )
 
-                st.session_state.voice_transcript = ""
+                st.session_state[f"voice_transcript_{form_version}"] = ""
                 st.session_state.report_form_version += 1
                 st.session_state.report_success_message = (
                     f"{report_type} item report submitted successfully. "
