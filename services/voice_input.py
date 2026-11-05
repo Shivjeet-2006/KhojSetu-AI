@@ -1,4 +1,3 @@
-
 import os
 import tempfile
 import streamlit as st
@@ -6,17 +5,22 @@ import streamlit as st
 from services.prisma_stt import transcribe_audio
 
 
-def voice_to_text():
+def voice_to_text(widget_key_suffix=""):
+    """Capture speech and return its transcript for the report description."""
 
-    if "voice_transcript" not in st.session_state:
-        st.session_state.voice_transcript = ""
+    transcript_key = f"voice_transcript_{widget_key_suffix}"
+    language_key = f"voice_language_{widget_key_suffix}"
+    audio_key = f"voice_audio_{widget_key_suffix}"
 
-    st.subheader("🎤 Voice Input")
+    if transcript_key not in st.session_state:
+        st.session_state[transcript_key] = ""
+
+    st.subheader("Voice input")
 
     language = st.selectbox(
-        "Select Language",
+        "Recording language",
         ["Hindi", "English", "Marathi"],
-        key="voice_language"
+        key=language_key
     )
 
     language_codes = {
@@ -26,13 +30,13 @@ def voice_to_text():
     }
 
     audio_file = st.audio_input(
-        "Record your voice",
-        sample_rate=16000
+        "Record a description",
+        sample_rate=16000,
+        key=audio_key
     )
 
     if audio_file is not None:
         temp_path = None
-
         try:
             with tempfile.NamedTemporaryFile(
                 delete=False,
@@ -41,7 +45,7 @@ def voice_to_text():
                 temp_file.write(audio_file.getvalue())
                 temp_path = temp_file.name
 
-            with st.spinner("Converting voice to text..."):
+            with st.spinner("Converting speech to text..."):
                 result = transcribe_audio(
                     temp_path,
                     language_code=language_codes[language]
@@ -54,11 +58,17 @@ def voice_to_text():
             )
 
             if transcript:
-                st.session_state.voice_transcript = transcript
-                st.success("Voice converted successfully!")
-                st.info(transcript)
+                st.session_state[transcript_key] = transcript
+                st.success("Voice description is ready.")
+                st.text_area(
+                    "Recognised text",
+                    value=transcript,
+                    height=90,
+                    disabled=True,
+                    key=f"voice_preview_{widget_key_suffix}"
+                )
             else:
-                st.warning("No speech detected. Try recording again.")
+                st.warning("No speech was detected. Please try recording again.")
 
         except Exception as error:
             st.error(f"Voice transcription failed: {error}")
@@ -67,4 +77,4 @@ def voice_to_text():
             if temp_path and os.path.exists(temp_path):
                 os.remove(temp_path)
 
-    return st.session_state.voice_transcript
+    return st.session_state[transcript_key]
