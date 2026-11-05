@@ -1,0 +1,121 @@
+/* KhojSetu AI - competition-ready visual system */
+:root {
+  --ks-primary: #294c7a;
+  --ks-primary-dark: #1d385d;
+  --ks-ink: #172b4d;
+  --ks-muted: #64748b;
+  --ks-bg: #f5f7fb;
+  --ks-surface: #ffffff;
+  --ks-border: #e2e8f0;
+  --ks-shadow: 0 8px 24px rgba(23, 43, 77, 0.06);
+}
+
+.stApp {
+  background: var(--ks-bg);
+  color: var(--ks-ink);
+}
+.main .block-container {
+  max-width: 1200px;
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+}
+[data-testid="stSidebar"] {
+  background: var(--ks-surface);
+  border-right: 1px solid var(--ks-border);
+}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h1 {
+  color: var(--ks-primary);
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+h1, h2, h3 {
+  color: var(--ks-ink);
+  letter-spacing: -0.025em;
+}
+[data-testid="stMetric"],
+[data-testid="stExpander"],
+[data-testid="stForm"],
+div[data-testid="stVerticalBlockBorderWrapper"] {
+  background: var(--ks-surface);
+  border: 1px solid var(--ks-border);
+  border-radius: 14px;
+  box-shadow: var(--ks-shadow);
+}
+div.stButton > button,
+div.stFormSubmitButton > button {
+  background: var(--ks-primary);
+  color: #fff;
+  border: 1px solid var(--ks-primary);
+  border-radius: 9px;
+  min-height: 2.8rem;
+  font-weight: 650;
+  transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+div.stButton > button:hover,
+div.stFormSubmitButton > button:hover {
+  background: var(--ks-primary-dark);
+  border-color: var(--ks-primary-dark);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(41, 76, 122, .18);
+  transform: translateY(-1px);
+}
+div[data-baseweb="input"] input,
+div[data-baseweb="textarea"] textarea,
+div[data-baseweb="select"] > div {
+  border-radius: 9px;
+}
+div[data-testid="stRadio"] [role="radiogroup"] {
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+div[data-testid="stRadio"] [role="radiogroup"] label {
+  background: #fff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  padding: .8rem 1rem !important;
+  min-height: 3.2rem;
+}
+div[data-testid="stRadio"] [role="radiogroup"] label *,
+div[data-testid="stRadio"] [role="radiogroup"] label p,
+div[data-testid="stRadio"] [role="radiogroup"] label span {
+  color: var(--ks-ink) !important;
+  opacity: 1 !important;
+  font-weight: 600 !important;
+}
+div[data-testid="stRadio"] [role="radiogroup"] label:has(input:checked) {
+  background: #eaf1fa !important;
+  border: 2px solid var(--ks-primary) !important;
+}
+.ks-hero {
+  background: linear-gradient(120deg, #172f50 0%, #315d91 100%);
+  padding: 2rem 2.2rem;
+  border-radius: 18px;
+  color: white;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 12px 28px rgba(23, 47, 80, .16);
+}
+.ks-hero h1 { color: #fff !important; margin: 0 0 .35rem; }
+.ks-hero p { color: #e5edf7; margin: 0; }
+.ks-muted { color: var(--ks-muted); }
+.ks-recording {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  color: #b42318;
+  font-weight: 650;
+}
+.ks-recording-dot {
+  width: .65rem;
+  height: .65rem;
+  border-radius: 50%;
+  background: #d92d20;
+  box-shadow: 0 0 0 0 rgba(217, 45, 32, .45);
+  animation: ks-pulse 1.4s infinite;
+}
+@keyframes ks-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(217, 45, 32, .4); }
+  70% { box-shadow: 0 0 0 9px rgba(217, 45, 32, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 45, 32, 0); }
+}
+[data-testid="stStatusWidget"] { border-radius: 10px; }
+footer { visibility: hidden; }
