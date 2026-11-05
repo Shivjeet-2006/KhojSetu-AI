@@ -103,6 +103,29 @@ st.markdown(
         color: #64748b;
         font-size: .92rem;
     }
+    /* High-contrast Lost / Found choices */
+    div[data-testid="stRadio"] [role="radiogroup"] {
+        gap: 0.75rem;
+    }
+    div[data-testid="stRadio"] [role="radiogroup"] label {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 10px !important;
+        padding: 0.85rem 1rem !important;
+        min-height: 3.2rem;
+        align-items: center !important;
+    }
+    div[data-testid="stRadio"] [role="radiogroup"] label *,
+    div[data-testid="stRadio"] [role="radiogroup"] label p,
+    div[data-testid="stRadio"] [role="radiogroup"] label span {
+        color: #172b4d !important;
+        opacity: 1 !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stRadio"] [role="radiogroup"] label:has(input:checked) {
+        background: #eaf2fb !important;
+        border: 2px solid #1d4f82 !important;
+    }
     footer {visibility: hidden;}
     </style>
     """,
@@ -181,8 +204,9 @@ if menu == "Report an Item":
         "Report type",
         ["lost", "found"],
         format_func=lambda option: (
-            "I LOST an item" if option == "lost"
-            else "I FOUND an item"
+            "I LOST an item — report something you lost"
+            if option == "lost"
+            else "I FOUND an item — report something you found"
         ),
         horizontal=True,
         key="report_type_choice",
