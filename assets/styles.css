@@ -1,4 +1,5 @@
 /* KhojSetu AI — shared UI system */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 :root {
   --ks-primary: #294c7a;
   --ks-primary-dark: #1d385d;
@@ -12,7 +13,7 @@
   --ks-radius: 14px;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
 
 html, body, [class*="css"] {
   font-family: 'DM Sans', sans-serif;
