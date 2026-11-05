@@ -286,8 +286,9 @@ if menu == "Report an Item":
     # Gemini Vision photo analysis. Suggestions are editable and user-confirmed.
     with st.expander("Upload item photo for AI suggestions", expanded=False):
         st.caption(
-            "Upload a clear photo. Gemini suggests the visible category, colour "
-            "and features. Review every suggestion before submitting."
+            "Upload one item photo at a time. Gemini suggests the visible category, "
+            "colour and features. Review every suggestion before submitting. "
+            "To report multiple items, create a separate report for each item."
         )
         uploaded_image = st.file_uploader(
             "Choose an item photo",
