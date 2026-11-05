@@ -6,7 +6,6 @@ import streamlit as st
 
 
 def get_api_key():
-
     key = os.getenv("GNANI_API_KEY")
 
     if not key:
@@ -37,10 +36,8 @@ def transcribe_audio(audio_path, language_code="hi-IN"):
     }
 
     for attempt in range(2):
-
         try:
             with open(audio_path, "rb") as audio:
-
                 response = requests.post(
                     url,
                     headers=headers,
@@ -56,11 +53,9 @@ def transcribe_audio(audio_path, language_code="hi-IN"):
                 )
 
             response.raise_for_status()
-
             return response.json()
 
         except requests.exceptions.RequestException:
-
             if attempt == 0:
                 time.sleep(5)
             else:
