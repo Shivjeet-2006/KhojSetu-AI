@@ -9,3 +9,6 @@ venv/
 *.mp3
 *.m4a
 *.db
+
+# Streamlit local secrets
+.streamlit/secrets.toml
