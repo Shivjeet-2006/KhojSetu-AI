@@ -501,9 +501,18 @@ elif menu == "Find Matches":
                                 st.write(f"**Location:** {item.get('location') or 'Not specified'}")
                                 st.write(f"**Date:** {item.get('item_date') or 'Not specified'}")
 
-                            st.write("**Matching factors**")
+                            st.write("**Match score breakdown**")
+                            st.caption(
+                                "Weighted contribution to the overall score. "
+                                "Location currently compares text labels, not GPS distance."
+                            )
+                            for factor, contribution in match.get("score_breakdown", {}).items():
+                                st.write(f"**{factor}: {contribution}%**")
+                                st.progress(min(max(contribution / 100, 0.0), 1.0))
+
+                            st.write("**Additional match checks**")
                             st.write(
-                                f"- Description similarity: {match['description_score']}%"
+                                f"- Raw description similarity: {match['description_score']}%"
                             )
                             st.write(
                                 f"- Category: {'Match' if match['category_match'] else 'No match'}"
