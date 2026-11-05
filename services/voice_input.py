@@ -11,71 +11,74 @@ def voice_to_text():
     if "voice_transcript" not in st.session_state:
         st.session_state.voice_transcript = ""
 
-    st.subheader("🎙️ Report using your voice")
+    st.subheader("🎤 Voice Input")
 
     language = st.selectbox(
-        "Choose your language",
-        ["hi-IN", "mr-IN", "en-IN"]
+        "Select Language",
+        ["Hindi", "English", "Marathi"],
+        key="voice_language"
     )
 
+    language_codes = {
+        "Hindi": "hi",
+        "English": "en",
+        "Marathi": "mr"
+    }
+
     audio_file = st.audio_input(
-        "Record your item description",
+        "Record your voice",
         sample_rate=16000
     )
 
     if audio_file is not None:
 
-        st.audio(audio_file)
+        api_key = os.getenv("VACHANA_API_KEY")
 
-        if st.button("Convert Speech to Text"):
+        try:
+            api_key = api_key or st.secrets["VACHANA_API_KEY"]
+        except Exception:
+            pass
 
-            api_key = os.getenv("GNANI_API_KEY")
+        if not api_key:
+            st.error("VACHANA API key is missing.")
+            return st.session_state.voice_transcript
 
-            if not api_key:
-                try:
-                    api_key = st.secrets["GNANI_API_KEY"]
-                except Exception:
-                    api_key = None
+        temp_path = None
 
-            if not api_key:
-                st.error("Gnani API key is missing.")
-                return st.session_state.voice_transcript
+        try:
+            with tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=".wav"
+            ) as temp_file:
 
-            temp_path = None
+                temp_file.write(audio_file.getvalue())
+                temp_path = temp_file.name
 
-            try:
-                with tempfile.NamedTemporaryFile(
-                    suffix=".wav",
-                    delete=False
-                ) as temp:
-                    temp.write(audio_file.getvalue())
-                    temp_path = temp.name
+            with st.spinner("Converting voice to text..."):
 
-                with st.spinner("Converting speech..."):
-
-                    result = transcribe_audio(
-                        temp_path,
-                        language_code=language
-                    )
-
-                transcript = (
-                    result.get("transcript")
-                    or result.get("text")
-                    or ""
+                result = transcribe_audio(
+                    temp_path,
+                    language_code=language_codes[language]
                 )
 
-                if transcript:
-                    st.session_state.voice_transcript = transcript
-                    st.success("Transcription successful!")
-                    st.info(transcript)
-                else:
-                    st.warning("No speech detected.")
+            transcript = (
+                result.get("transcript")
+                or result.get("text")
+                or ""
+            )
 
-            except Exception as error:
-                st.error(f"Transcription failed: {error}")
+            if transcript:
+                st.session_state.voice_transcript = transcript
+                st.success("Voice converted successfully!")
+                st.info(transcript)
+            else:
+                st.warning("No speech detected. Please try again.")
 
-            finally:
-                if temp_path and os.path.exists(temp_path):
-                    os.remove(temp_path)
+        except Exception as e:
+            st.error(f"Voice transcription failed: {e}")
+
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
 
     return st.session_state.voice_transcript
