@@ -7,6 +7,7 @@ this application. The user must review every suggestion before submission.
 import json
 import os
 import re
+import time
 
 import streamlit as st
 from google import genai
@@ -16,7 +17,7 @@ from PIL import Image, UnidentifiedImageError
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MODEL_NAME = "gemini-3.8-flash"
+MODEL_NAMES = ("gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash-lite")
 
 CATEGORY_OPTIONS = [
     "Bag", "Bottle", "Mobile Phone", "Wallet", "Laptop",
@@ -100,23 +101,53 @@ Rules:
 - Return no markdown and no extra commentary.
 """
 
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=[
-            prompt,
-            types.Part.from_bytes(
-                data=image_bytes,
-                mime_type=mime_type
-            )
-        ],
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            temperature=0.1,
-            max_output_tokens=400
+    request_contents = [
+        prompt,
+        types.Part.from_bytes(
+            data=image_bytes,
+            mime_type=mime_type
         )
+    ]
+    request_config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        temperature=0.1,
+        max_output_tokens=400
     )
 
-    result = _extract_json(response.text)
+    # Retry temporary overloads, then try supported fallback models.
+    # Authentication, permission and invalid-request errors are not retried.
+    response = None
+    last_error = None
+    for model_name in MODEL_NAMES:
+        for attempt in range(2):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=request_contents,
+                    config=request_config
+                )
+                break
+            except Exception as error:
+                last_error = error
+                error_text = str(error).lower()
+                is_temporary = any(
+                    marker in error_text
+                    for marker in ("503", "429", "500", "502", "504", "unavailable", "resource_exhausted", "deadline")
+                )
+                if not is_temporary:
+                    raise
+                if attempt == 0:
+                    time.sleep(1.5)
+        if response is not None:
+            break
+
+    if response is None:
+        raise RuntimeError(
+            "Gemini is temporarily busy across the available models. "
+            "Please wait a minute and try again."
+        ) from last_error
+
+    result = _extract_json(response.text or "")
 
     category = str(result.get("category", "Other")).strip()
     if category not in CATEGORY_OPTIONS:
