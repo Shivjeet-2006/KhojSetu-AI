@@ -17,26 +17,48 @@ def get_supabase_client():
 
     if not url or not key:
         raise RuntimeError(
-            "Supabase connection details are missing. Add SUPABASE_URL "
-            "and SUPABASE_KEY in Streamlit app Settings > Secrets."
+            "Missing SUPABASE_URL or SUPABASE_KEY. Add both in "
+            "Streamlit app Settings > Secrets."
         )
 
     return create_client(url, key)
 
 
+def _show_supabase_error(exc):
+    """Show useful API error fields without exposing connection secrets."""
+    error_data = exc.args[0] if getattr(exc, "args", None) else None
+
+    if isinstance(error_data, dict):
+        code = error_data.get("code", "")
+        message = error_data.get("message", str(exc))
+        details = error_data.get("details", "")
+        hint = error_data.get("hint", "")
+    else:
+        code = getattr(exc, "code", "")
+        message = getattr(exc, "message", "") or str(exc)
+        details = getattr(exc, "details", "")
+        hint = getattr(exc, "hint", "")
+
+    st.error("KhojSetu AI could not connect to the Supabase reports table.")
+    st.write("**Supabase error code:**", code or "Not provided")
+    st.write("**Message:**", message or "No message provided")
+    if details:
+        st.write("**Details:**", details)
+    if hint:
+        st.write("**Hint:**", hint)
+    st.info(
+        "Please share these error fields (code, message, details and hint). "
+        "Do not share your Supabase URL or API key."
+    )
+    st.stop()
+
+
 def create_tables():
-    """
-    The reports table is created in the Supabase SQL Editor.
-    This function checks the connection when the app starts.
-    """
+    """Check that the Supabase reports table is reachable."""
     try:
         get_supabase_client().table("reports").select("id").limit(1).execute()
     except Exception as exc:
-        raise RuntimeError(
-            "Could not connect to the Supabase 'reports' table. "
-            "Check your Streamlit secrets and Supabase table/RLS settings. "
-            f"Details: {exc}"
-        ) from exc
+        _show_supabase_error(exc)
 
 
 def add_report(report_type, description, category="",
