@@ -123,6 +123,13 @@ if "report_form_version" not in st.session_state:
 if "report_success_message" not in st.session_state:
     st.session_state.report_success_message = None
 
+
+def reset_report_form():
+    """Start with a clean form whenever the user switches Lost/Found."""
+    current_version = st.session_state.get("report_form_version", 0)
+    st.session_state[f"voice_transcript_{current_version}"] = ""
+    st.session_state.report_form_version = current_version + 1
+
 # --------------------------------------------------
 # SIDEBAR NAVIGATION
 # --------------------------------------------------
@@ -179,7 +186,8 @@ if menu == "Report an Item":
         ),
         horizontal=True,
         key="report_type_choice",
-        label_visibility="collapsed"
+        label_visibility="collapsed",
+        on_change=reset_report_form
     )
 
     form_version = st.session_state.report_form_version
