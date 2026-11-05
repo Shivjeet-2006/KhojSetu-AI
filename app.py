@@ -6,6 +6,7 @@ from database.database import create_tables, add_report, get_reports
 from services.voice_input import voice_to_text
 from services.matching import find_matches
 from services.image_analysis import analyse_item_image
+from services.demo_data import get_demo_image_suggestions
 
 
 # --------------------------------------------------
@@ -196,43 +197,57 @@ if menu == "Report an Item":
                 "and is not stored with the report."
             )
 
-            if st.button(
-                "Analyse photo with Gemini",
-                key=f"analyse_image_{form_version}",
-                use_container_width=True,
-                disabled=demo_mode
-            ):
-                try:
-                    with st.spinner("Gemini is analysing the item photo..."):
-                        suggestions = analyse_item_image(
-                            image_bytes=uploaded_image.getvalue(),
-                            mime_type=uploaded_image.type
-                        )
-
-                    # A successful analysis belongs to the currently uploaded photo.
-                    # Replace all previous AI-filled values so an old item's description
-                    # cannot remain attached to a newly analysed image. Users can edit
-                    # every field immediately after the suggestions are populated.
+            # Demo output is a cached fixture, not analysis of the uploaded photo.
+            if demo_mode:
+                if st.button(
+                    "Load cached demo suggestions",
+                    key=f"demo_analyse_image_{form_version}",
+                    use_container_width=True
+                ):
+                    suggestions = get_demo_image_suggestions()
                     st.session_state[f"category_{form_version}"] = suggestions["category"]
                     st.session_state[f"description_{form_version}"] = suggestions["description"]
                     st.session_state[f"color_{form_version}"] = suggestions["color"]
                     st.session_state[f"details_{form_version}"] = "; ".join(suggestions["features"])
-
                     st.session_state[f"image_analysis_notice_{form_version}"] = (
-                        f"Gemini suggestions ready. Confidence: {suggestions['confidence']}."
+                        "Cached demo sample loaded. This is not Gemini analysis of your uploaded photo."
                     )
                     st.rerun()
+            else:
+                if st.button(
+                    "Analyse photo with Gemini",
+                    key=f"analyse_image_{form_version}",
+                    use_container_width=True
+                ):
+                    try:
+                        with st.spinner("Gemini is analysing the item photo..."):
+                            suggestions = analyse_item_image(
+                                image_bytes=uploaded_image.getvalue(),
+                                mime_type=uploaded_image.type
+                            )
 
-                except Exception as error:
-                    st.error(f"Image analysis could not be completed: {error}")
+                        # Replace all previous AI-filled values after a successful
+                        # analysis so details from an older photo cannot leak forward.
+                        st.session_state[f"category_{form_version}"] = suggestions["category"]
+                        st.session_state[f"description_{form_version}"] = suggestions["description"]
+                        st.session_state[f"color_{form_version}"] = suggestions["color"]
+                        st.session_state[f"details_{form_version}"] = "; ".join(suggestions["features"])
+
+                        st.session_state[f"image_analysis_notice_{form_version}"] = (
+                            f"Gemini suggestions ready. Confidence: {suggestions['confidence']}."
+                        )
+                        st.rerun()
+
+                    except Exception as error:
+                        st.error(f"Image analysis could not be completed: {error}")
 
         notice = st.session_state.get(f"image_analysis_notice_{form_version}")
         if notice:
             st.success(notice)
-            st.caption("AI-generated details may be inaccurate. Check and edit them before submitting.")
+            st.caption("These are suggested details, not verified facts. Review and edit them before using them.")
 
         if demo_mode:
-            st.caption("Turn off Demo mode to run live Gemini image analysis.")
+            st.caption("Demo suggestions are preloaded sample data. They do not describe or analyse the selected photo.")
 
     st.subheader("Item details")
 
