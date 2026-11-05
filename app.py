@@ -167,11 +167,19 @@ if menu == "Report an Item":
         st.success(st.session_state.report_success_message)
         st.session_state.report_success_message = None
 
+    st.markdown("### Choose report type")
+    st.caption("Select the option that describes your situation.")
+
     report_type = st.radio(
-        "What would you like to report?",
-        ["Lost", "Found"],
+        "Report type",
+        ["lost", "found"],
+        format_func=lambda option: (
+            "I LOST an item" if option == "lost"
+            else "I FOUND an item"
+        ),
         horizontal=True,
-        key="report_type_choice"
+        key="report_type_choice",
+        label_visibility="collapsed"
     )
 
     form_version = st.session_state.report_form_version
