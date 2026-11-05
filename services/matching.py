@@ -107,7 +107,14 @@ def find_matches(lost_description, found_items, top_k=3,
             "category_match": bool(category_score),
             "color_match": bool(color_score),
             "location_match": bool(location_score),
-            "details_match": bool(details_score)
+            "details_match": bool(details_score),
+            "score_breakdown": {
+                "Description similarity (40%)": round(40 * description_score, 2),
+                "Category match (20%)": round(20 * category_score, 2),
+                "Colour match (15%)": round(15 * color_score, 2),
+                "Location text match (15%)": round(15 * location_score, 2),
+                "Identifying details (10%)": round(10 * details_score, 2)
+            }
         })
 
     results.sort(
