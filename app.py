@@ -19,123 +19,6 @@ st.set_page_config(
 )
 
 # --------------------------------------------------
-# PROFESSIONAL THEME
-# --------------------------------------------------
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'DM Sans', sans-serif;
-    }
-    .stApp {
-        background: #f6f8fb;
-        color: #172033;
-    }
-    [data-testid="stSidebar"] {
-        background: #ffffff;
-        border-right: 1px solid #e7ebf2;
-    }
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h1 {
-        color: #173b68;
-        font-size: 1.45rem;
-    }
-    .main .block-container {
-        max-width: 1180px;
-        padding-top: 2.2rem;
-        padding-bottom: 3rem;
-    }
-    h1, h2, h3 {
-        color: #172b4d;
-        letter-spacing: -0.025em;
-    }
-    .hero {
-        background: linear-gradient(120deg, #173b68 0%, #245b91 100%);
-        padding: 2rem 2.2rem;
-        border-radius: 18px;
-        color: white;
-        margin-bottom: 1.6rem;
-    }
-    .hero h1 {
-        color: white !important;
-        font-size: 2.1rem;
-        margin: 0 0 .35rem 0;
-    }
-    .hero p {
-        color: #e5effa;
-        font-size: 1rem;
-        margin: 0;
-    }
-    .section-card {
-        background: #ffffff;
-        border: 1px solid #e7ebf2;
-        border-radius: 14px;
-        padding: 1.15rem 1.25rem;
-        margin-bottom: 1rem;
-    }
-    div.stButton > button, div.stFormSubmitButton > button {
-        background: #1d4f82;
-        color: white;
-        border: 1px solid #1d4f82;
-        border-radius: 9px;
-        min-height: 2.8rem;
-        font-weight: 600;
-    }
-    div.stButton > button:hover, div.stFormSubmitButton > button:hover {
-        background: #153d67;
-        color: white;
-        border-color: #153d67;
-    }
-    div[data-baseweb="input"] input,
-    div[data-baseweb="textarea"] textarea {
-        border-radius: 8px;
-    }
-    div[data-testid="stMetric"] {
-        background: white;
-        border: 1px solid #e7ebf2;
-        padding: 1rem;
-        border-radius: 12px;
-    }
-    [data-testid="stExpander"] {
-        background: white;
-        border: 1px solid #e7ebf2;
-        border-radius: 10px;
-    }
-    .muted {
-        color: #64748b;
-        font-size: .92rem;
-    }
-    /* High-contrast Lost / Found choices */
-    div[data-testid="stRadio"] [role="radiogroup"] {
-        gap: 0.75rem;
-    }
-    div[data-testid="stRadio"] [role="radiogroup"] label {
-        background: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 10px !important;
-        padding: 0.85rem 1rem !important;
-        min-height: 3.2rem;
-        align-items: center !important;
-    }
-    div[data-testid="stRadio"] [role="radiogroup"] label *,
-    div[data-testid="stRadio"] [role="radiogroup"] label p,
-    div[data-testid="stRadio"] [role="radiogroup"] label span {
-        color: #172b4d !important;
-        opacity: 1 !important;
-        font-weight: 600 !important;
-    }
-    div[data-testid="stRadio"] [role="radiogroup"] label:has(input:checked) {
-        background: #eaf2fb !important;
-        border: 2px solid #1d4f82 !important;
-    }
-    footer {visibility: hidden;}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# --------------------------------------------------
 # LOAD REUSABLE THEME STYLES
 # --------------------------------------------------
 stylesheet_path = Path(__file__).parent / "assets" / "styles.css"
@@ -170,8 +53,11 @@ def reset_report_form():
 # SIDEBAR NAVIGATION
 # --------------------------------------------------
 with st.sidebar:
-    st.markdown("# KhojSetu AI")
-    st.caption("Multilingual Lost & Found Platform")
+    st.markdown(
+        '<div class="ks-brand"><span class="ks-brand-mark">K</span>'
+        '<div><strong>KhojSetu AI</strong><small>Multilingual Lost &amp; Found</small></div></div>',
+        unsafe_allow_html=True
+    )
     st.divider()
 
     demo_mode = st.toggle(
@@ -180,6 +66,12 @@ with st.sidebar:
         help="Use built-in sample reports for a presentation. Demo reports are not saved to Supabase."
     )
 
+    if demo_mode:
+        st.caption("🟠 Presentation preview is active")
+    else:
+        st.caption("🟢 Live reporting mode")
+
+    st.markdown('<div class="ks-sidebar-label">WORKSPACE</div>', unsafe_allow_html=True)
     menu = st.radio(
         "MAIN MENU",
         ["Report an Item", "Browse Reports", "Find Matches"],
@@ -194,7 +86,7 @@ with st.sidebar:
 # --------------------------------------------------
 st.markdown(
     """
-    <div class="hero">
+    <div class="ks-hero">
         <h1>KhojSetu AI</h1>
         <p>A smarter way to report, discover and reconnect lost belongings.</p>
     </div>
