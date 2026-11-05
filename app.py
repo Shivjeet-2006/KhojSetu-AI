@@ -5,6 +5,7 @@ import streamlit as st
 from database.database import create_tables, add_report, get_reports
 from services.voice_input import voice_to_text
 from services.matching import find_matches
+from services.image_analysis import analyse_item_image
 
 
 # --------------------------------------------------
@@ -282,6 +283,68 @@ if menu == "Report an Item":
         transcript = voice_to_text(widget_key_suffix=str(form_version))
         st.caption("Record in Hindi, English or Marathi. You can edit the recognised text in the description field.")
 
+    # Gemini Vision photo analysis. Suggestions are editable and user-confirmed.
+    with st.expander("Upload item photo for AI suggestions", expanded=False):
+        st.caption(
+            "Upload a clear photo. Gemini suggests the visible category, colour "
+            "and features. Review every suggestion before submitting."
+        )
+        uploaded_image = st.file_uploader(
+            "Choose an item photo",
+            type=["jpg", "jpeg", "png", "webp"],
+            accept_multiple_files=False,
+            key=f"item_image_{form_version}"
+        )
+
+        if uploaded_image is not None:
+            st.image(uploaded_image, caption="Photo selected for analysis", use_container_width=True)
+            st.caption(
+                "Maximum file size: 5 MB. The image is analysed in memory "
+                "and is not stored with the report."
+            )
+
+            if st.button(
+                "Analyse photo with Gemini",
+                key=f"analyse_image_{form_version}",
+                use_container_width=True,
+                disabled=demo_mode
+            ):
+                try:
+                    with st.spinner("Gemini is analysing the item photo..."):
+                        suggestions = analyse_item_image(
+                            image_bytes=uploaded_image.getvalue(),
+                            mime_type=uploaded_image.type
+                        )
+
+                    category_key = f"category_{form_version}"
+                    description_key = f"description_{form_version}"
+                    color_key = f"color_{form_version}"
+                    details_key = f"details_{form_version}"
+
+                    st.session_state[category_key] = suggestions["category"]
+                    if not st.session_state.get(description_key, "").strip():
+                        st.session_state[description_key] = suggestions["description"]
+                    if not st.session_state.get(color_key, "").strip():
+                        st.session_state[color_key] = suggestions["color"]
+                    if suggestions["features"] and not st.session_state.get(details_key, "").strip():
+                        st.session_state[details_key] = "; ".join(suggestions["features"])
+
+                    st.session_state[f"image_analysis_notice_{form_version}"] = (
+                        f"Gemini suggestions ready. Confidence: {suggestions['confidence']}."
+                    )
+                    st.rerun()
+
+                except Exception as error:
+                    st.error(f"Image analysis could not be completed: {error}")
+
+        notice = st.session_state.get(f"image_analysis_notice_{form_version}")
+        if notice:
+            st.success(notice)
+            st.caption("AI-generated details may be inaccurate. Check and edit them before submitting.")
+
+        if demo_mode:
+            st.caption("Turn off Demo mode to run live Gemini image analysis.")
+
     st.subheader("Item details")
 
     category_options = [
@@ -307,12 +370,15 @@ if menu == "Report an Item":
         )
 
     with st.form(f"report_form_{form_version}", clear_on_submit=False):
+        description_key = f"description_{form_version}"
+        if description_key not in st.session_state:
+            st.session_state[description_key] = transcript
+
         description = st.text_area(
             "Item description *",
-            value=transcript,
             placeholder="Example: Black backpack with a red tag and two front pockets.",
             height=100,
-            key=f"description_{form_version}"
+            key=description_key
         )
 
         col1, col2 = st.columns(2)
