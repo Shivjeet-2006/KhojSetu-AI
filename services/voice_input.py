@@ -20,9 +20,9 @@ def voice_to_text():
     )
 
     language_codes = {
-        "Hindi": "hi",
-        "English": "en",
-        "Marathi": "mr"
+        "Hindi": "hi-IN",
+        "English": "en-IN",
+        "Marathi": "mr-IN"
     }
 
     audio_file = st.audio_input(
@@ -31,18 +31,6 @@ def voice_to_text():
     )
 
     if audio_file is not None:
-
-        api_key = os.getenv("VACHANA_API_KEY")
-
-        try:
-            api_key = api_key or st.secrets["VACHANA_API_KEY"]
-        except Exception:
-            pass
-
-        if not api_key:
-            st.error("VACHANA API key is missing.")
-            return st.session_state.voice_transcript
-
         temp_path = None
 
         try:
@@ -50,12 +38,10 @@ def voice_to_text():
                 delete=False,
                 suffix=".wav"
             ) as temp_file:
-
                 temp_file.write(audio_file.getvalue())
                 temp_path = temp_file.name
 
             with st.spinner("Converting voice to text..."):
-
                 result = transcribe_audio(
                     temp_path,
                     language_code=language_codes[language]
@@ -72,10 +58,10 @@ def voice_to_text():
                 st.success("Voice converted successfully!")
                 st.info(transcript)
             else:
-                st.warning("No speech detected. Please try again.")
+                st.warning("No speech detected. Try recording again.")
 
-        except Exception as e:
-            st.error(f"Voice transcription failed: {e}")
+        except Exception as error:
+            st.error(f"Voice transcription failed: {error}")
 
         finally:
             if temp_path and os.path.exists(temp_path):
