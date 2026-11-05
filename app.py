@@ -173,6 +173,12 @@ with st.sidebar:
     st.caption("Multilingual Lost & Found Platform")
     st.divider()
 
+    demo_mode = st.toggle(
+        "Demo mode",
+        value=False,
+        help="Use built-in sample reports for a presentation. Demo reports are not saved to Supabase."
+    )
+
     menu = st.radio(
         "MAIN MENU",
         ["Report an Item", "Browse Reports", "Find Matches"],
@@ -194,6 +200,50 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# --------------------------------------------------
+# PRESENTATION DATA (IN-MEMORY ONLY)
+# --------------------------------------------------
+demo_reports = [
+    {
+        "id": 9001, "report_type": "lost",
+        "description": "Black leather wallet with a college identity card",
+        "category": "Wallet", "color": "Black",
+        "location": "YCCE College Canteen, Nagpur",
+        "item_date": "2026-11-04",
+        "identifying_details": "Small initials engraved inside the wallet."
+    },
+    {
+        "id": 9002, "report_type": "found",
+        "description": "Black wallet found near the college canteen",
+        "category": "Wallet", "color": "Black",
+        "location": "YCCE College Canteen, Nagpur",
+        "item_date": "2026-11-04",
+        "identifying_details": "Contains an identity card and bank card."
+    },
+    {
+        "id": 9003, "report_type": "lost",
+        "description": "Blue Milton water bottle with silver cap",
+        "category": "Bottle", "color": "Blue",
+        "location": "College Library, Nagpur",
+        "item_date": "2026-11-03",
+        "identifying_details": "Small white star sticker on the side."
+    },
+    {
+        "id": 9004, "report_type": "found",
+        "description": "Blue water bottle with a metal silver lid",
+        "category": "Bottle", "color": "Blue",
+        "location": "College Library, Nagpur",
+        "item_date": "2026-11-03",
+        "identifying_details": "White sticker attached near the bottom."
+    }
+]
+
+if demo_mode:
+    st.info(
+        "Demo mode is active. Sample reports are shown for presentation only; "
+        "they are not written to or mixed with your Supabase records."
+    )
 
 # ==================================================
 # 1. REPORT AN ITEM
@@ -295,8 +345,12 @@ if menu == "Report an Item":
 
         submitted = st.form_submit_button(
             "Submit report",
-            use_container_width=True
+            use_container_width=True,
+            disabled=demo_mode
         )
+
+    if demo_mode:
+        st.caption("Turn off Demo mode to submit a real report.")
 
     if submitted:
         final_category = custom_category.strip() if category == "Other" else category
@@ -339,7 +393,7 @@ elif menu == "Browse Reports":
         unsafe_allow_html=True
     )
 
-    all_reports = get_reports()
+    all_reports = demo_reports if demo_mode else get_reports()
 
     report_filter = st.selectbox(
         "Show reports",
@@ -395,7 +449,7 @@ elif menu == "Find Matches":
         unsafe_allow_html=True
     )
 
-    all_reports = get_reports()
+    all_reports = demo_reports if demo_mode else get_reports()
     lost_items = [r for r in all_reports if r["report_type"] == "lost"]
     found_items = [r for r in all_reports if r["report_type"] == "found"]
 
