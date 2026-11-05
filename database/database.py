@@ -1,27 +1,56 @@
 """Supabase-backed database helpers for KhojSetu AI."""
 
 import os
+from urllib.parse import urlsplit, urlunsplit
+
 import streamlit as st
 from supabase import create_client
 
 
+def _read_secret(name):
+    try:
+        return st.secrets.get(name) or os.getenv(name)
+    except Exception:
+        return os.getenv(name)
+
+
 @st.cache_resource
 def get_supabase_client():
-    """Create and cache the Supabase client for this Streamlit session."""
-    try:
-        url = st.secrets.get("SUPABASE_URL") or os.getenv("SUPABASE_URL")
-        key = st.secrets.get("SUPABASE_KEY") or os.getenv("SUPABASE_KEY")
-    except Exception:
-        url = os.getenv("SUPABASE_URL")
-        key = os.getenv("SUPABASE_KEY")
+    """Create and cache a Supabase client using the project root URL."""
+    raw_url = _read_secret("SUPABASE_URL")
+    key = _read_secret("SUPABASE_KEY")
 
-    if not url or not key:
+    if not raw_url or not key:
         raise RuntimeError(
             "Missing SUPABASE_URL or SUPABASE_KEY. Add both in "
             "Streamlit app Settings > Secrets."
         )
 
-    return create_client(url, key)
+    raw_url = raw_url.strip().rstrip("/")
+    parsed = urlsplit(raw_url)
+
+    if parsed.scheme not in ("https", "http") or not parsed.netloc:
+        raise RuntimeError(
+            "SUPABASE_URL must be the project root URL, for example "
+            "https://your-project-ref.supabase.co"
+        )
+
+    # The Supabase Python client adds /rest/v1 itself. Remove it if the
+    # copied URL already includes that suffix, preventing a duplicated path.
+    path = parsed.path.rstrip("/")
+    if path.endswith("/rest/v1"):
+        path = path[:-len("/rest/v1")]
+    if path:
+        raise RuntimeError(
+            "SUPABASE_URL contains an unexpected path. Use only the project "
+            "root URL (https://your-project-ref.supabase.co), without "
+            "/rest/v1, /dashboard, or any other path."
+        )
+
+    project_root_url = urlunsplit(
+        (parsed.scheme, parsed.netloc, "", "", "")
+    )
+    return create_client(project_root_url, key)
 
 
 def _show_supabase_error(exc):
@@ -47,8 +76,7 @@ def _show_supabase_error(exc):
     if hint:
         st.write("**Hint:**", hint)
     st.info(
-        "Please share these error fields (code, message, details and hint). "
-        "Do not share your Supabase URL or API key."
+        "Share these error fields only. Never share your Supabase URL or API key."
     )
     st.stop()
 
