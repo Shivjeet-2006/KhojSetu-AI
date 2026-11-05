@@ -7,3 +7,4 @@ scikit-learn
 gnani-vachana
 transformers
 soundfile
+supabase
