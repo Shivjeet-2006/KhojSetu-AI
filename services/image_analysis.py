@@ -16,7 +16,7 @@ from PIL import Image, UnidentifiedImageError
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-3.8-flash"
 
 CATEGORY_OPTIONS = [
     "Bag", "Bottle", "Mobile Phone", "Wallet", "Laptop",
