@@ -1,3 +1,4 @@
+import hashlib
 import os
 import tempfile
 import streamlit as st
@@ -35,14 +36,23 @@ def voice_to_text(widget_key_suffix=""):
         key=audio_key
     )
 
+    processed_key = f"processed_audio_hash_{widget_key_suffix}"
     if audio_file is not None:
+        audio_bytes = audio_file.getvalue()
+        audio_hash = hashlib.sha256(audio_bytes).hexdigest()
+
+        # Streamlit reruns the script after interactions. Avoid sending the
+        # same recorded clip to the transcription service more than once.
+        if st.session_state.get(processed_key) == audio_hash:
+            return st.session_state[transcript_key]
+
         temp_path = None
         try:
             with tempfile.NamedTemporaryFile(
                 delete=False,
                 suffix=".wav"
             ) as temp_file:
-                temp_file.write(audio_file.getvalue())
+                temp_file.write(audio_bytes)
                 temp_path = temp_file.name
 
             with st.spinner("Converting speech to text..."):
@@ -56,6 +66,8 @@ def voice_to_text(widget_key_suffix=""):
                 or result.get("text")
                 or ""
             )
+
+            st.session_state[processed_key] = audio_hash
 
             if transcript:
                 st.session_state[transcript_key] = transcript
