@@ -17,7 +17,7 @@ from PIL import Image, UnidentifiedImageError
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MODEL_NAMES = ("gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash-lite")
+MODEL_NAMES = ("gemini-3.8-flash", "gemini-3.5-flash-lite")
 
 CATEGORY_OPTIONS = [
     "Bag", "Bottle", "Mobile Phone", "Wallet", "Laptop",
@@ -75,7 +75,10 @@ def analyse_item_image(image_bytes, mime_type):
     except (UnidentifiedImageError, OSError):
         raise ValueError("The uploaded file is not a valid image.")
 
-    client = genai.Client(api_key=_get_api_key())
+    client = genai.Client(
+        api_key=_get_api_key(),
+        http_options=types.HttpOptions(timeout=30000)
+    )
 
     prompt = """
 You are assisting a lost-and-found reporting application.
@@ -114,37 +117,32 @@ Rules:
         max_output_tokens=400
     )
 
-    # Retry temporary overloads, then try supported fallback models.
-    # Authentication, permission and invalid-request errors are not retried.
+    # Keep the user-facing wait bounded: one request per model. The SDK
+    # already has built-in retry handling for transient API failures.
     response = None
     last_error = None
     for model_name in MODEL_NAMES:
-        for attempt in range(2):
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=request_contents,
-                    config=request_config
-                )
-                break
-            except Exception as error:
-                last_error = error
-                error_text = str(error).lower()
-                is_temporary = any(
-                    marker in error_text
-                    for marker in ("503", "429", "500", "502", "504", "unavailable", "resource_exhausted", "deadline")
-                )
-                if not is_temporary:
-                    raise
-                if attempt == 0:
-                    time.sleep(1.5)
-        if response is not None:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=request_contents,
+                config=request_config
+            )
             break
+        except Exception as error:
+            last_error = error
+            error_text = str(error).lower()
+            is_temporary = any(
+                marker in error_text
+                for marker in ("503", "429", "500", "502", "504", "unavailable", "resource_exhausted", "deadline")
+            )
+            if not is_temporary:
+                raise
 
     if response is None:
         raise RuntimeError(
-            "Gemini is temporarily busy across the available models. "
-            "Please wait a minute and try again."
+            "Gemini is temporarily busy. Please wait 30–60 seconds and try again. "
+            "No report has been submitted."
         ) from last_error
 
     result = _extract_json(response.text or "")
