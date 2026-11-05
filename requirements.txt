@@ -8,3 +8,5 @@ gnani-vachana
 transformers
 soundfile
 supabase
+google-genai
+Pillow
