@@ -303,26 +303,29 @@ elif menu == "Browse Reports":
         unsafe_allow_html=True
     )
 
+    all_reports = get_reports()
+
     report_filter = st.selectbox(
         "Show reports",
         ["All Reports", "Lost Items", "Found Items"]
     )
 
     if report_filter == "Lost Items":
-        reports = get_reports("lost")
+        reports = [r for r in all_reports if r["report_type"] == "lost"]
     elif report_filter == "Found Items":
-        reports = get_reports("found")
+        reports = [r for r in all_reports if r["report_type"] == "found"]
     else:
-        reports = get_reports()
+        reports = all_reports
 
-    total = len(reports)
-    lost_count = sum(1 for report in reports if report["report_type"] == "lost")
-    found_count = sum(1 for report in reports if report["report_type"] == "found")
+    total_count = len(all_reports)
+    lost_count = sum(1 for report in all_reports if report["report_type"] == "lost")
+    found_count = sum(1 for report in all_reports if report["report_type"] == "found")
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Reports shown", total)
-    c2.metric("Lost items", lost_count)
-    c3.metric("Found items", found_count)
+    c1.metric("Total reports", total_count)
+    c2.metric("Lost reports", lost_count)
+    c3.metric("Found reports", found_count)
+    st.caption(f"Displaying {len(reports)} report(s) for the selected filter.")
 
     if not reports:
         st.info("No reports found for this selection.")
