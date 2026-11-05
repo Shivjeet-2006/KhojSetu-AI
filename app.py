@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import streamlit as st
 
 from database.database import create_tables, add_report, get_reports
@@ -131,6 +133,16 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# --------------------------------------------------
+# LOAD REUSABLE THEME STYLES
+# --------------------------------------------------
+stylesheet_path = Path(__file__).parent / "assets" / "styles.css"
+if stylesheet_path.exists():
+    st.markdown(
+        f"<style>{stylesheet_path.read_text(encoding='utf-8')}</style>",
+        unsafe_allow_html=True
+    )
 
 # --------------------------------------------------
 # DATABASE INITIALIZATION
